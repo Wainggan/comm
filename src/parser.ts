@@ -238,7 +238,7 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 		whileStmt() {
 			const cond = this.expression();
 			const loop = this.expressionStatement();
-			return new Expr.WhileStmt(cond, loop);
+			return new Expr.While(cond, loop);
 		},
 		ifStmt() {
 			const cond = this.expression();

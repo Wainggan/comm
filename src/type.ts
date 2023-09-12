@@ -73,6 +73,7 @@ export interface Visitor {
 	visitAssign(node: Expr.Assign): number;
 
 	visitIf(node: Expr.If): number;
+	visitWhile(node: Expr.While): number;
 
 	visitBinary(node: Expr.Binary): number;
 	visitUnary(node: Expr.Unary): number;
@@ -150,6 +151,20 @@ export namespace Expr {
 		}
 		evaluate(visitor: Visitor): number {
 			return visitor.visitIf(this);
+		}
+	}
+	export class While implements Expression {
+		condition: Expression;
+		branch: Expression;
+		constructor(
+			condition: Expression,
+			branch: Expression
+		) {
+			this.condition = condition;
+			this.branch = branch;
+		}
+		evaluate(visitor: Visitor): number {
+			return visitor.visitWhile(this);
 		}
 	}
 
