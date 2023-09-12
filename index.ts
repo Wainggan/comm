@@ -6,7 +6,11 @@ import { parse } from "./src/parser";
 
 import { Reporter } from "./src/error";
 
-const src = `? 1 2 ; 3`
+const src = `
+mut i = 0
+i = i + 1
+print i
+`
 
 const reporter = new Reporter(src);
 

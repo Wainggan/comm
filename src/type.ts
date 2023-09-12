@@ -1,12 +1,20 @@
 
-export interface Expression {
-	evaluate(visitor: Visitor): number;
+export type Value = number | string;
+
+export class Type {
+	static signature: Symbol = Symbol();
+	supports_add: boolean = false;
 }
 
+export interface Expression {
+	accept(visitor: Visitor): Value;
+}
 
 export enum TT {
-	number = 0,
+	int = 0,
+	double,
 	string,
+
 	identifier,
 
 	plus,
@@ -21,7 +29,15 @@ export enum TT {
 	equal,
 	equal_equal,
 
+	emark,
 	emark_equal,
+	qmark,
+
+	comma,
+	dot,
+	tilde,
+	colon,
+	semicolon,
 
 	lparen,
 	rparen,
@@ -30,17 +46,17 @@ export enum TT {
 	lbracket,
 	rbracket,
 
-	comma,
-	dot,
-	tilde,
-	dollar,
-	qmark,
-	emark,
-	colon,
-	semicolon,
-	at,
+	let,
+	mut,
+	if,
+	else,
+	while,
+	for,
 	return,
-
+	break,
+	continue,
+	exit,
+	
 	print,
 
 	eof,
@@ -64,24 +80,26 @@ export class Token {
 
 
 export interface Visitor {
-	visitBlock(node: Expr.Block): number;
+	visitBlock(node: Expr.Block): Value;
 
-	visitLiteralNumber(node: Expr.Literal_Number): number;
-	visitLiteralString(node: Expr.Literal_String): number;
+	visitLiteralInt(node: Expr.Literal_Int): Value;
+	visitLiteralDouble(node: Expr.Literal_Double): Value;
+	visitLiteralString(node: Expr.Literal_String): Value;
+	visitLiteralNull(node: Expr.Literal_Null): Value;
 
-	visitVariable(node: Expr.Variable): number;
-	visitAssign(node: Expr.Assign): number;
+	visitVariable(node: Expr.Variable): Value;
+	visitAssign(node: Expr.Assign): Value;
 
-	visitIf(node: Expr.If): number;
-	visitWhile(node: Expr.While): number;
+	visitIf(node: Expr.If): Value;
+	visitWhile(node: Expr.While): Value;
 
-	visitBinary(node: Expr.Binary): number;
-	visitUnary(node: Expr.Unary): number;
+	visitBinary(node: Expr.Binary): Value;
+	visitUnary(node: Expr.Unary): Value;
 
-	visitLet(node: Expr.Let): number;
-	visitReturn(node: Expr.Return): number;
+	visitLet(node: Expr.Let): Value;
+	visitReturn(node: Expr.Return): Value;
 
-	visitPrint(node: Expr.Print): number;
+	visitPrint(node: Expr.Print): Value;
 }
 
 export namespace Expr {
@@ -91,27 +109,41 @@ export namespace Expr {
 		constructor(stmts: Expression[]) {
 			this.stmts = stmts;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitBlock(this);
 		}
 	}
 
-	export class Literal_Number implements Expression {
-		value: number;
-		constructor(value: number) {
+	export class Literal_Int implements Expression {
+		value: Value;
+		constructor(value: Value) {
 			this.value = value;
 		}
-		evaluate(visitor: Visitor): number {
-			return visitor.visitLiteralNumber(this);
+		accept(visitor: Visitor): Value {
+			return visitor.visitLiteralInt(this);
+		}
+	}
+	export class Literal_Double implements Expression {
+		value: Value;
+		constructor(value: Value) {
+			this.value = value;
+		}
+		accept(visitor: Visitor): Value {
+			return visitor.visitLiteralDouble(this);
 		}
 	}
 	export class Literal_String implements Expression {
-		value: string;
-		constructor(value: string) {
+		value: Value;
+		constructor(value: Value) {
 			this.value = value;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitLiteralString(this);
+		}
+	}
+	export class Literal_Null implements Expression {
+		accept(visitor: Visitor): Value {
+			return visitor.visitLiteralNull(this);
 		}
 	}
 
@@ -120,7 +152,7 @@ export namespace Expr {
 		constructor(name: Token) {
 			this.name = name;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitVariable(this);
 		}
 	}
@@ -131,7 +163,7 @@ export namespace Expr {
 			this.name = name;
 			this.value = value;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitAssign(this);
 		}
 	}
@@ -149,7 +181,7 @@ export namespace Expr {
 			this.thenBranch = thenBranch;
 			this.elseBranch = elseBranch;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitIf(this);
 		}
 	}
@@ -163,7 +195,7 @@ export namespace Expr {
 			this.condition = condition;
 			this.branch = branch;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitWhile(this);
 		}
 	}
@@ -175,7 +207,7 @@ export namespace Expr {
 			this.op = op;
 			this.right = right;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitUnary(this);
 		}
 	}
@@ -188,7 +220,7 @@ export namespace Expr {
 			this.op = op;
 			this.right = right;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitBinary(this);
 		}
 	}
@@ -198,16 +230,18 @@ export namespace Expr {
 		constructor(decs: LetDeclaration[]) {
 			this.declarations = decs;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitLet(this);
 		}
 	}
 	export class LetDeclaration {
 		name: Token;
 		value: Expression | null;
-		constructor(name: Token, value: Expression | null) {
+		isConst: boolean;
+		constructor(name: Token, value: Expression | null, isConst: boolean) {
 			this.name = name;
 			this.value = value;
+			this.isConst = isConst;
 		}
 	}
 
@@ -216,7 +250,7 @@ export namespace Expr {
 		constructor (value: Expression) {
 			this.value = value;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitReturn(this);
 		}
 	}
@@ -226,7 +260,7 @@ export namespace Expr {
 		constructor (value: Expression) {
 			this.value = value;
 		}
-		evaluate(visitor: Visitor): number {
+		accept(visitor: Visitor): Value {
 			return visitor.visitPrint(this);
 		}
 	}

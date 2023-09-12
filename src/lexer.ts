@@ -44,8 +44,10 @@ export const lexer = (src: string, reporter: Reporter) => {
 			advance();
 			while (isNumber(peek()))
 				advance();
+			add(TT.double);
+			return;
 		}
-		add(TT.number);
+		add(TT.int);
 	};
 	const string = (c = `'`) => {
 		while (!match(c) && !atEnd())
@@ -56,13 +58,21 @@ export const lexer = (src: string, reporter: Reporter) => {
 	const identifier = () => {
 		while (isIdentifier(peek()) || isNumber(peek()))
 			advance();
-		const identifiers = {
-			'print': 'print'
+		const identifiers: { [key: string]: TT } = {
+			'if': TT.if,
+			'else': TT.else,
+			'let': TT.let,
+			'mut': TT.mut,
+			'break': TT.break,
+			'continue': TT.continue,
+			'return': TT.return,
+			'kthxbye': TT.exit,
+			'print': TT.print,
 		};
 		const str: string = src.slice(start, current)
 		if (str in identifiers)
 			// ts doesn't know its own types
-			add(TT[str as unknown as number] as unknown as TT);
+			add(identifiers[str]);
 		else
 			add(TT.identifier);
 	};
@@ -94,7 +104,6 @@ export const lexer = (src: string, reporter: Reporter) => {
 
 				break;
 			}
-			case '$': add(TT.dollar); break;
 			case '?': add(TT.qmark); break;
 			case ':': add(TT.colon); break;
 			case ';': add(TT.semicolon); break;

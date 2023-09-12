@@ -38,16 +38,27 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 		advance();
 
 		while (!atEnd()) {
-			if (previous().type == TT.comma) return;
+			if (previous().type == TT.semicolon) return;
 
 			switch (peek().type) {
-				case TT.dollar:
-				case TT.qmark:
-				case TT.at:
+				case TT.if:
+				case TT.while:
+				case TT.for:
+				case TT.break:
+				case TT.return:
+				case TT.continue:
+				case TT.let:
+				case TT.mut:
 					return;
 			}
 
 			advance();
+		}
+	}
+
+	const T = {
+		atom() {
+
 		}
 	}
 
@@ -56,7 +67,7 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 			const stmts: Expression[] = [];
 
 			while (!atEnd()) {
-				if (match(TT.comma)) {}
+				if (match(TT.semicolon)) { }
 				else stmts.push(this.statement())
 			}
 
@@ -68,7 +79,7 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 			const rbrace = previous();
 
 			while (!check(TT.rbrace) && !atEnd()) {
-				if (match(TT.comma)) {}
+				if (match(TT.semicolon)) { }
 				else stmts.push(this.statement())
 			}
 
@@ -78,8 +89,10 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 		},
 		statement(): Expression {
 			try {
-				if (match(TT.dollar))
-					return this.letStmt();
+				if (match(TT.let))
+					return this.letStmt(true);
+				else if (match(TT.mut))
+					return this.letStmt(false);
 				return this.expressionStatement();
 			} catch (e) {
 				console.error(e)
@@ -87,7 +100,7 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 					throw new Error(e as string);
 				}
 				panic();
-				return new Expr.Literal_Number(0);
+				return new Expr.Literal_Null();
 			}
 		},
 		expressionStatement(): Expression {
@@ -176,25 +189,25 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 			let expr = this.primary();
 
 			while (true) {
-				if (match('lparen')) {
+				if (match(TT.lparen)) {
 					const args = [];
-					if (!check('rparen')) {
+					if (!check(TT.rparen)) {
 						do {
-							if (check('comma'))
-								args.push(new Expr.NullLiteral());
+							if (check(TT.comma))
+								args.push(new Expr.Literal_Null());
 							else
 								args.push(this.expression());
-						} while (match('comma'));
+						} while (match(TT.comma));
 					}
-					const paren = consume('rparen', `expected ')' after function call`);
+					const paren = consume(TT.rparen, `expected ')' after function call`);
 					expr = new Expr.Call(expr, paren, args);
-				} else if (match('lbracket')) {
+				} else if (match(TT.lbracket)) {
 					const key = this.expression()
-					consume('rbracket', `Expected ']' after collection access`);
+					consume(TT.rbracket, `Expected ']' after collection access`);
 					expr = new Expr.DynamicGet(expr, key);
-				} else if (match('period')) {
-					const key = consume('identifier', `Expected identifier`)
-					expr = new Expr.Get(expr, new Expr.StringLiteral(key.value));
+				} else if (match(TT.dot)) {
+					const key = consume(TT.identifier, `Expected identifier`)
+					expr = new Expr.Get(expr, new Expr.Variable(key));
 				} else {
 					break;
 				}
@@ -203,9 +216,9 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 			return expr;
 		},
 		primary(): Expression {
-			if (match(TT.qmark))
+			if (match(TT.if))
 				return this.ifStmt();
-			if (match(TT.at))
+			if (match(TT.while))
 				return this.whileStmt();
 
 			if (match(TT.print)) {
@@ -215,15 +228,17 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 			if (match(TT.identifier)) {
 				return new Expr.Variable(previous());
 			}
-			if (match(TT.number))
-				return new Expr.Literal_Number(Number.parseFloat(previous().value));
+			if (match(TT.int))
+				return new Expr.Literal_Int(Number.parseInt(previous().value));
+			if (match(TT.double))
+				return new Expr.Literal_Double(Number.parseFloat(previous().value));
 
 			if (match(TT.lbrace))
 				return new Expr.Block(this.block());
 
 			throw new ParseError(`Unexpected token: '${peek().type}' ???`, peek().position)
 		},
-		letStmt() {
+		letStmt(isConst: boolean) {
 			const declarations: Expr.LetDeclaration[] = [];
 			do {
 				const name = consume(TT.identifier, `Expected variable identifier`);
@@ -231,7 +246,7 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 				if (match(TT.equal)) {
 					value = this.expression();
 				}
-				declarations.push(new Expr.LetDeclaration(name, value))
+				declarations.push(new Expr.LetDeclaration(name, value, isConst))
 			} while (match(TT.comma));
 			return new Expr.Let(declarations);
 		},
@@ -244,12 +259,12 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 			const cond = this.expression();
 			const thenBranch = this.expressionStatement();
 			let elseBranch = null;
-			if (match(TT.semicolon))
+			if (match(TT.else))
 				elseBranch = this.expressionStatement();
 			return new Expr.If(cond, thenBranch, elseBranch);
 		},
 		returnStmt() {
-			return new Expr.Return(match(TT.tilde) ? new Expr.Literal_Number(0) : this.expression());
+			return new Expr.Return(match(TT.tilde) ? new Expr.Literal_Null() : this.expression());
 		},
 	}
 
