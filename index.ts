@@ -2,13 +2,21 @@
 import { vm, OP } from "./src/vm";
 
 import { lexer } from "./src/lexer";
+import { parse } from "./src/parser";
+
 import { Reporter } from "./src/error";
 
-const src = `1 + 1 print table - 2`
+const src = `? 1 2 ; 3`
 
 const reporter = new Reporter(src);
 
-console.log(lexer(src, reporter).map(i => i.toString()))
+const tokens = lexer(src, reporter);
+
+console.log(tokens.map(i => i.toString()))
+
+const ast = parse(tokens, reporter);
+
+console.log(ast);
 
 const bin: number[] = [
 	OP.number, 10,

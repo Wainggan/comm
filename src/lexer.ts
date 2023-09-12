@@ -94,6 +94,10 @@ export const lexer = (src: string, reporter: Reporter) => {
 
 				break;
 			}
+			case '$': add(TT.dollar); break;
+			case '?': add(TT.qmark); break;
+			case ':': add(TT.colon); break;
+			case ';': add(TT.semicolon); break;
 			default:
 				if (isWhitespace(char)) {
 					whitespace();
