@@ -8,7 +8,11 @@ import { resolve } from "./src/resolver";
 import { Reporter } from "./src/error";
 
 const src = `
-2 + (while false 2 + 2)
+let test = 2
+let a = 0
+{
+	let test = a
+}
 `
 
 const reporter = new Reporter(src);

@@ -67,22 +67,33 @@ const TypeDefs = {
 
 type Result = Type;
 
+type EnvironmentType = {
+	type: Type,
+	constant: boolean,
+	defined: boolean
+};
+
 class Environment {
 	encloses: Environment | null;
-	vars: Map<string, Type>;
+	vars: Map<string, EnvironmentType>;
 	constructor(encloses: Environment | null) {
 		this.encloses = encloses;
-		this.vars = new Map<string, Type>();
+		this.vars = new Map<string, EnvironmentType>();
 	}
 	has(name: string): boolean {
 		if (this.vars.has(name)) return true;
 		if (this.encloses != null) return this.encloses.has(name);
 		return false;
 	}
-	add(name: string, type: Type) {
-		this.vars.set(name, type);
+	add(name: string, type: Type, constant: boolean) {
+		this.vars.set(name, { type, constant, defined: false });
 	}
-	get(name: string): Type {
+	define(name: string, type: Type) {
+		const previous = this.vars.get(name)!;
+		previous.type = type;
+		previous.defined = true;
+	}
+	get(name: string): EnvironmentType {
 		if (this.vars.has(name)) return this.vars.get(name)!;
 		if (this.encloses != null) return this.encloses.get(name);
 		throw new Error(`Oops`);
@@ -157,10 +168,33 @@ class ResolveVisitor implements Visitor<Result> {
 			this.reporter.error(`error!! resolve: variable '${node.name.value}' does not exist`, node.name.position);
 			return TypeDefs.null;
 		}
-		return this.environment.get(node.name.value);
+
+		const variable = this.environment.get(node.name.value);
+		if (!variable.defined) {
+			this.reporter.error(`error!! resolve: variable '${node.name.value}' used before defined`, node.name.position);
+		}
+		
+		return variable.type;
 	}
 	visitAssign(node: Expr.Assign): Result {
-		throw new Error("Method not implemented.");
+		if (!this.environment.has(node.name.value)) {
+			this.reporter.error(`error!! resolve: variable '${node.name.value}' does not exist`, node.name.position);
+			return TypeDefs.null;
+		}
+
+		const type = this.environment.get(node.name.value);
+		if (type.constant) {
+			this.reporter.error(`error!! resolve: variable '${node.name.value}' is constant, and can't be reassigned`, node.name.position);
+			return TypeDefs.null;
+		}
+
+		const value = this.evaluate(node.value);
+		if (!value.equal(type.type)) {
+			this.reporter.error(`error!! resolve: incorrect type on '${node.name.value}' assignment`, node.name.position);
+			return type.type;
+		}
+
+		return type.type;
 	}
 	visitIf(node: Expr.If): Result {
 		const condition = this.evaluate(node.condition);
@@ -204,8 +238,16 @@ class ResolveVisitor implements Visitor<Result> {
 	visitLet(node: Expr.Let): Result {
 		for (let i = 0; i < node.declarations.length; i++) {
 			const dec = node.declarations[i];
+			this.environment.add(dec.name.value, TypeDefs.null, dec.isConst);
 			const value = this.evaluate(dec.value);
-			this.environment.add(dec.name.value, value);
+
+			value.prune();
+			if (value.types.length != 1) {
+				this.reporter.error(`error!! resolve: variable '${dec.name.value}' definition type could not be resolved`, dec.name.position);
+				continue;
+			}
+
+			this.environment.define(dec.name.value, value);
 		}
 		return TypeDefs.null;
 	}
