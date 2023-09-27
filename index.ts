@@ -5,14 +5,10 @@ import { lexer } from "./src/lexer";
 import { parse } from "./src/parser";
 import { resolve } from "./src/resolver";
 
-import { Reporter } from "./src/error";
+import { Reporter } from "./src/types/error";
 
 const src = `
-let test = 2
-let a = 0
-{
-	let test = a
-}
+let test: int = 0
 `
 
 const reporter = new Reporter(src);

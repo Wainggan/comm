@@ -1,7 +1,7 @@
 
 import { Peek } from "bun";
-import { Reporter } from "./error";
-import { Expr, Expression, Visitor, Value } from "./type";
+import { Reporter } from "./types/error";
+import { Expr, Expression, Visitor } from "./types/expression";
 import exp from "constants";
 
 
@@ -141,8 +141,6 @@ class ResolveVisitor implements Visitor<Result> {
 			type = this.evaluate(node.stmts[i]);
 		}
 
-		console.log(this.environment.vars)
-
 		this.pop()
 
 		return type;
@@ -173,7 +171,7 @@ class ResolveVisitor implements Visitor<Result> {
 		if (!variable.defined) {
 			this.reporter.error(`error!! resolve: variable '${node.name.value}' used before defined`, node.name.position);
 		}
-		
+
 		return variable.type;
 	}
 	visitAssign(node: Expr.Assign): Result {

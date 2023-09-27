@@ -1,7 +1,7 @@
 
-import { TT, Token } from "./type";
+import { TT, Token } from "./types/token";
 
-import { Reporter } from "./error"
+import { Reporter } from "./types/error"
 
 export const lexer = (src: string, reporter: Reporter) => {
 	let current = 0;
@@ -44,7 +44,7 @@ export const lexer = (src: string, reporter: Reporter) => {
 			advance();
 			while (isNumber(peek()))
 				advance();
-			add(TT.double);
+			add(TT.float);
 			return;
 		}
 		add(TT.int);
@@ -74,6 +74,12 @@ export const lexer = (src: string, reporter: Reporter) => {
 			'continue': TT.continue,
 			'return': TT.return,
 			'kthxbye': TT.exit,
+
+			'int': TT.t_int,
+			'flt': TT.t_float,
+			'bool': TT.t_bool,
+			'str': TT.t_string,
+			'void': TT.t_void,
 			
 			'print': TT.print,
 		};

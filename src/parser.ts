@@ -1,6 +1,15 @@
 
-import { Token, TT, Expression, Expr } from "./type";
-import { Reporter } from "./error";
+import { Expression, Expr } from "./types/expression";
+import { Token, TT } from "./types/token";
+import { Reporter } from "./types/error";
+
+
+class ParsedType {
+	type: TT;
+	constructor(type: TT) {
+		this.type = type;
+	}
+}
 
 export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 
@@ -57,8 +66,14 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 	}
 
 	const T = {
+		type() {
+			return this.atom();
+		},
 		atom() {
-
+			if (match(TT.t_int, TT.t_i32)) {
+				return new ParsedType(TT.t_int);
+			}
+			throw new Error(`unknown type`)
 		}
 	}
 
@@ -232,7 +247,7 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			}
 			if (match(TT.int))
 				return new Expr.Literal_Int(Number.parseInt(previous().value));
-			if (match(TT.double))
+			if (match(TT.float))
 				return new Expr.Literal_Double(Number.parseFloat(previous().value));
 			if (match(TT.string))
 				return new Expr.Literal_String(previous().value);
@@ -261,7 +276,11 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 				if (match(TT.equal)) {
 					value = this.expression();
 				}
-				declarations.push(new Expr.LetDeclaration(name, value ?? new Expr.Literal_Null(), isConst))
+				let type = null;
+				if (match(TT.colon)) {
+					type = T.type();
+				}
+				declarations.push(new Expr.LetDeclaration(name, value ?? new Expr.Literal_Null(), type, isConst))
 			} while (match(TT.comma));
 			return new Expr.Let(declarations);
 		},
