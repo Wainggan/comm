@@ -178,7 +178,15 @@ class ResolveVisitor implements Visitor<Result> {
 		return type;
 	}
 	visitWhile(node: Expr.While): Result {
-		throw new Error("Method not implemented.");
+		const condition = this.evaluate(node.condition);
+
+		if (!condition.equal(TypeDefs.bool)) {
+			this.reporter.error("error!! resolve: condition must be bool", node.token.position);
+		}
+
+		const branch = this.evaluate(node.branch);
+
+		return branch;
 	}
 	visitBinary(node: Expr.Binary): Result {
 		const left = this.evaluate(node.left);

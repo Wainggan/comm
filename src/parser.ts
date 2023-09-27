@@ -111,6 +111,13 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			return this.expression();
 		},
 		expression(): Expression {
+			return this.conditional();
+		},
+		conditional(): Expression {
+			if (match(TT.if))
+				return this.ifStmt();
+			if (match(TT.while))
+				return this.whileStmt();
 			return this.assignment();
 		},
 		assignment(): Expression {
@@ -216,11 +223,6 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			return expr;
 		},
 		primary(): Expression {
-			if (match(TT.if))
-				return this.ifStmt();
-			if (match(TT.while))
-				return this.whileStmt();
-
 			if (match(TT.print)) {
 				return new Expr.Print(this.expression());
 			}
@@ -241,6 +243,11 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			if (match(TT.null))
 				return new Expr.Literal_Null();
 
+			if (match(TT.lparen)) {
+				const expr = this.expression();
+				consume(TT.rparen, `error!! parse: expected ')'`, peek().position);
+				return expr;
+			}
 			if (match(TT.lbrace))
 				return new Expr.Block(this.block());
 
@@ -259,9 +266,10 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			return new Expr.Let(declarations);
 		},
 		whileStmt() {
+			const token = previous();
 			const cond = this.expression();
 			const loop = this.expressionStatement();
-			return new Expr.While(cond, loop);
+			return new Expr.While(cond, loop, token);
 		},
 		ifStmt() {
 			const token = previous();

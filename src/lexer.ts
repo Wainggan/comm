@@ -62,14 +62,19 @@ export const lexer = (src: string, reporter: Reporter) => {
 			'true': TT.true,
 			'false': TT.false,
 			'null': TT.null,
+			
 			'if': TT.if,
 			'else': TT.else,
+			'while': TT.while,
+			
 			'let': TT.let,
 			'mut': TT.mut,
+			
 			'break': TT.break,
 			'continue': TT.continue,
 			'return': TT.return,
 			'kthxbye': TT.exit,
+			
 			'print': TT.print,
 		};
 		const str: string = src.slice(start, current)

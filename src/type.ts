@@ -206,12 +206,15 @@ export namespace Expr {
 	export class While implements Expression {
 		condition: Expression;
 		branch: Expression;
+		token: Token;
 		constructor(
 			condition: Expression,
-			branch: Expression
+			branch: Expression,
+			token: Token,
 		) {
 			this.condition = condition;
 			this.branch = branch;
+			this.token = token;
 		}
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitWhile(this);
