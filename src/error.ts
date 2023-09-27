@@ -1,12 +1,14 @@
 
-
 export class Reporter {
+
 	src: string;
 	hadError: boolean;
+
 	constructor(src: string) {
 		this.src = src;
 		this.hadError = false;
 	}
+
 	error(message: string, position: number) { // todo: cleanup
 		this.hadError = true;
 
@@ -42,5 +44,6 @@ export class Reporter {
 
 		console.error(str);
 	}
+	
 }
 

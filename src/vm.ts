@@ -1,21 +1,51 @@
 
-export const OP = {
-	number:	0x00,
-	pop:	0x01,
+export enum OP {
+	number = 0,
+	pop,
 
-	store:	0x10,
-	load:	0x11,
+	store,
+	load,
 
-	add:	0x20,
-	negate:	0x21,
+	add,
+	negate,
 
-	print:	0xf1,
-	nop:	0xff,
+	print,
+	nop,
+}
+
+export const ASM = {
+
+	// stack manipulation
+
+	i32: 	0x00,
+	i16: 	0x01,
+	f32: 	0x02,
+	pop: 	0x0f,
+
+	// math ~ int
+
+	add_int:	0x10,
+	mult_int:	0x11,
+	neg_int:	0x12,
+
+	// math ~ float
+
+	add_float:	0x20,
+	mult_float: 0x11,
+	div_float: 	0x12,
+	neg_float:	0x13,
+
+	// memory
+
+	store:	0x30,
+	load:	0x31,
+
 } as const;
-
 
 export const vm = (bin: number[]) => {
 
+	return;
+	
 	const memory = new Map<number, number>();
 	const stack: number[] = [];
 	let pc = 0;

@@ -59,6 +59,9 @@ export const lexer = (src: string, reporter: Reporter) => {
 		while (isIdentifier(peek()) || isNumber(peek()))
 			advance();
 		const identifiers: { [key: string]: TT } = {
+			'true': TT.true,
+			'false': TT.false,
+			'null': TT.null,
 			'if': TT.if,
 			'else': TT.else,
 			'let': TT.let,
@@ -88,6 +91,7 @@ export const lexer = (src: string, reporter: Reporter) => {
 		switch (char) {
 			case '+': add(TT.plus); break;
 			case '-': add(TT.minus); break;
+			case '*': add(TT.star); break;
 			case '/': {
 				if (match('/'))
 					while (peek() != '\n' && !atEnd()) advance();
@@ -100,13 +104,26 @@ export const lexer = (src: string, reporter: Reporter) => {
 					}
 				}
 				else
-					add(TT.eof);
+					add(TT.slash);
 
 				break;
 			}
+
+			case '=': add(match('=') ? TT.equal_equal : TT.equal); break;
+			case '!': add(match('=') ? TT.emark_equal : TT.emark); break;
+
 			case '?': add(TT.qmark); break;
+
+			case '(': add(TT.lparen); break;
+			case ')': add(TT.rparen); break;
+			case '{': add(TT.lbrace); break;
+			case '}': add(TT.rbrace); break;
+			case '[': add(TT.lbracket); break;
+			case ']': add(TT.rbracket); break;
+
 			case ':': add(TT.colon); break;
 			case ';': add(TT.semicolon); break;
+			
 			default:
 				if (isWhitespace(char)) {
 					whitespace();

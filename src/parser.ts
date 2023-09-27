@@ -2,7 +2,7 @@
 import { Token, TT, Expression, Expr } from "./type";
 import { Reporter } from "./error";
 
-export const parse = (tokens: Token[], reporter: Reporter) => {
+export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 
 	class ParseError extends Error {
 		constructor(message: string, position: number) {
@@ -232,6 +232,14 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 				return new Expr.Literal_Int(Number.parseInt(previous().value));
 			if (match(TT.double))
 				return new Expr.Literal_Double(Number.parseFloat(previous().value));
+			if (match(TT.string))
+				return new Expr.Literal_String(previous().value);
+
+			if (match(TT.true, TT.false))
+				return new Expr.Literal_Bool(previous().type == TT.true)
+			
+			if (match(TT.null))
+				return new Expr.Literal_Null();
 
 			if (match(TT.lbrace))
 				return new Expr.Block(this.block());
@@ -246,7 +254,7 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 				if (match(TT.equal)) {
 					value = this.expression();
 				}
-				declarations.push(new Expr.LetDeclaration(name, value, isConst))
+				declarations.push(new Expr.LetDeclaration(name, value ?? new Expr.Literal_Null(), isConst))
 			} while (match(TT.comma));
 			return new Expr.Let(declarations);
 		},
@@ -256,12 +264,13 @@ export const parse = (tokens: Token[], reporter: Reporter) => {
 			return new Expr.While(cond, loop);
 		},
 		ifStmt() {
+			const token = previous();
 			const cond = this.expression();
 			const thenBranch = this.expressionStatement();
 			let elseBranch = null;
 			if (match(TT.else))
 				elseBranch = this.expressionStatement();
-			return new Expr.If(cond, thenBranch, elseBranch);
+			return new Expr.If(cond, thenBranch, elseBranch ?? new Expr.Literal_Null(), token);
 		},
 		returnStmt() {
 			return new Expr.Return(match(TT.tilde) ? new Expr.Literal_Null() : this.expression());
