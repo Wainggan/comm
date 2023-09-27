@@ -1,7 +1,7 @@
 
-import { Expression, Expr } from "./types/expression";
-import { Token, TT } from "./types/token";
-import { Reporter } from "./types/error";
+import { Expression, Expr } from "./classes/expression";
+import { Token, TT } from "./classes/token";
+import { Reporter } from "./classes/error";
 
 
 class ParsedType {

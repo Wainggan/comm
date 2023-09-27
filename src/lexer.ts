@@ -1,7 +1,7 @@
 
-import { TT, Token } from "./types/token";
+import { TT, Token } from "./classes/token";
 
-import { Reporter } from "./types/error"
+import { Reporter } from "./classes/error"
 
 export const lexer = (src: string, reporter: Reporter) => {
 	let current = 0;

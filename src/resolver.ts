@@ -1,7 +1,7 @@
 
 import { Peek } from "bun";
-import { Reporter } from "./types/error";
-import { Expr, Expression, Visitor } from "./types/expression";
+import { Reporter } from "./classes/error";
+import { Expr, Expression, Visitor } from "./classes/expression";
 import exp from "constants";
 
 

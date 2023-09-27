@@ -5,7 +5,7 @@ import { lexer } from "./src/lexer";
 import { parse } from "./src/parser";
 import { resolve } from "./src/resolver";
 
-import { Reporter } from "./src/types/error";
+import { Reporter } from "./src/classes/error";
 
 const src = `
 let test: int = 0
