@@ -4,9 +4,16 @@ import { TT, Token } from "./classes/token";
 import { Reporter } from "./classes/error"
 
 export const lexer = (src: string, reporter: Reporter) => {
+
+	// state
+
 	let current = 0;
 	let start = 0;
 	let line = 1;
+
+	const tokens: Token[] = [];
+
+	// helper functions
 
 	const atEnd = () => current >= src.length;
 
@@ -32,11 +39,11 @@ export const lexer = (src: string, reporter: Reporter) => {
 			c == '_';
 	const isWhitespace = (c: string): boolean => /\s/.test(c);
 
-	const tokens: Token[] = [];
-
 	const add = (type: TT) =>
 		tokens.push(new Token(type, src.slice(start, current), start, line));
 
+	// consumer functions
+	
 	const number = () => {
 		while (isNumber(peek()))
 			advance();
@@ -95,6 +102,8 @@ export const lexer = (src: string, reporter: Reporter) => {
 			advance();
 		}
 	};
+
+	// scan
 
 	while (!atEnd()) {
 		start = current;

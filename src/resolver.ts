@@ -1,10 +1,7 @@
 
-import { Peek } from "bun";
 import { Reporter } from "./classes/error";
 import { Expr, Expression, Visitor } from "./classes/expression";
 import { Type, TypeDefs, Atoms } from "./classes/type";
-import exp from "constants";
-
 
 type Result = Type;
 

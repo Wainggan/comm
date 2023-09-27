@@ -20,7 +20,11 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 		}
 	}
 
+	// state
+
 	let current = 0;
+
+	// helper functions
 
 	const peek = () => tokens[current];
 	const previous = () => tokens[current - 1];
@@ -65,6 +69,8 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 		}
 	}
 
+	// type parser
+
 	const T = {
 		type() {
 			return this.atom();
@@ -76,6 +82,8 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			throw new Error(`unknown type`)
 		}
 	}
+
+	// expression parser
 
 	const R = {
 		program() {
