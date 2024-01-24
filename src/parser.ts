@@ -2,14 +2,8 @@
 import { Expression, Expr } from "./classes/expression";
 import { Token, TT } from "./classes/token";
 import { Reporter } from "./classes/error";
+import { Type, type_defaults } from "./classes/type";
 
-
-class ParsedType {
-	type: TT;
-	constructor(type: TT) {
-		this.type = type;
-	}
-}
 
 export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 
@@ -77,7 +71,7 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 		},
 		atom() {
 			if (match(TT.t_int, TT.t_i32)) {
-				return new ParsedType(TT.t_int);
+				return type_defaults.int;
 			}
 			throw new Error(`unknown type`)
 		}
@@ -86,7 +80,7 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 	// expression parser
 
 	const R = {
-		program() {
+		module() {
 			const stmts: Expression[] = [];
 
 			while (!atEnd()) {
@@ -94,7 +88,7 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 				else stmts.push(this.statement())
 			}
 
-			return new Expr.Block(stmts);
+			return new Expr.Module(stmts);
 		},
 		block(): Expression[] {
 			const stmts: Expression[] = [];
@@ -277,18 +271,18 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			throw new ParseError(`Unexpected token: '${peek().type}' ???`, peek().position)
 		},
 		letStmt(isConst: boolean) {
-			const declarations: Expr.LetDeclaration[] = [];
+			const declarations: Expr.Declaration[] = [];
 			do {
 				const name = consume(TT.identifier, `Expected variable identifier`);
+				let type = type_defaults.null;
+				if (match(TT.colon)) {
+					type = T.type();
+				}
 				let value = null;
 				if (match(TT.equal)) {
 					value = this.expression();
 				}
-				let type = null;
-				if (match(TT.colon)) {
-					type = T.type();
-				}
-				declarations.push(new Expr.LetDeclaration(name, value ?? new Expr.Literal_Null(), type, isConst))
+				declarations.push(new Expr.Declaration(name, value ?? new Expr.Literal_Null(), type, isConst))
 			} while (match(TT.comma));
 			return new Expr.Let(declarations);
 		},
@@ -312,7 +306,7 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 		},
 	}
 
-	return R.program();
+	return R.module();
 
 };
 

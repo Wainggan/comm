@@ -1,8 +1,13 @@
 
 import { Token } from './token';
 
+import { Table } from './type';
+
+import { Type } from './type';
+
 
 export interface Visitor<V> {
+	visitModule(node: Expr.Module): V;
 	visitBlock(node: Expr.Block): V;
 
 	visitLiteralInt(node: Expr.Literal_Int): V;
@@ -27,16 +32,30 @@ export interface Visitor<V> {
 }
 
 export interface Expression {
+	parent: Expression | null;
 	accept<V>(visitor: Visitor<V>): V;
 }
 
 export namespace Expr {
+
+	export class Module implements Expression {
+		stmts: Expression[];
+		locals: Table = new Map();
+		constructor(stmts: Expression[]) {
+			this.stmts = stmts;
+		}
+		parent: Expression | null = null;
+		accept<V>(visitor: Visitor<V>): V {
+			return visitor.visitModule(this);
+		}
+	}
 
 	export class Block implements Expression {
 		stmts: Expression[];
 		constructor(stmts: Expression[]) {
 			this.stmts = stmts;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitBlock(this);
 		}
@@ -47,6 +66,7 @@ export namespace Expr {
 		constructor(value: number) {
 			this.value = value;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitLiteralInt(this);
 		}
@@ -56,6 +76,7 @@ export namespace Expr {
 		constructor(value: number) {
 			this.value = value;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitLiteralDouble(this);
 		}
@@ -65,6 +86,7 @@ export namespace Expr {
 		constructor(value: string) {
 			this.value = value;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitLiteralString(this);
 		}
@@ -74,11 +96,13 @@ export namespace Expr {
 		constructor(value: boolean) {
 			this.value = value;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitLiteralBool(this);
 		}
 	}
 	export class Literal_Null implements Expression {
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitLiteralNull(this);
 		}
@@ -89,6 +113,7 @@ export namespace Expr {
 		constructor(name: Token) {
 			this.name = name;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitVariable(this);
 		}
@@ -100,6 +125,7 @@ export namespace Expr {
 			this.name = name;
 			this.value = value;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitAssign(this);
 		}
@@ -121,6 +147,7 @@ export namespace Expr {
 			this.elseBranch = elseBranch;
 			this.token = token;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitIf(this);
 		}
@@ -138,6 +165,7 @@ export namespace Expr {
 			this.branch = branch;
 			this.token = token;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitWhile(this);
 		}
@@ -150,6 +178,7 @@ export namespace Expr {
 			this.op = op;
 			this.right = right;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitUnary(this);
 		}
@@ -163,27 +192,31 @@ export namespace Expr {
 			this.op = op;
 			this.right = right;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitBinary(this);
 		}
 	}
 
 	export class Let implements Expression {
-		declarations: LetDeclaration[];
-		constructor(decs: LetDeclaration[]) {
+		declarations: Declaration[];
+		constructor(decs: Declaration[]) {
 			this.declarations = decs;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitLet(this);
 		}
 	}
-	export class LetDeclaration {
+	export class Declaration {
 		name: Token;
 		value: Expression;
+		type: Type;
 		isConst: boolean;
-		constructor(name: Token, value: Expression, isConst: boolean) {
+		constructor(name: Token, value: Expression, type: Type, isConst: boolean) {
 			this.name = name;
 			this.value = value;
+			this.type = type;
 			this.isConst = isConst;
 		}
 	}
@@ -193,6 +226,7 @@ export namespace Expr {
 		constructor (value: Expression) {
 			this.value = value;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitReturn(this);
 		}
@@ -203,6 +237,7 @@ export namespace Expr {
 		constructor (value: Expression) {
 			this.value = value;
 		}
+		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
 			return visitor.visitPrint(this);
 		}

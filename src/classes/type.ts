@@ -1,61 +1,41 @@
 
+import { Expression, Expr } from "./expression"
+import { TT } from "./token"
 
-export enum Atoms {
-	none,
+export type Symbol = {
+	declaration: Expr.Declaration
+}
+
+export type Table = Map<string, Symbol>
+
+export enum BaseTypes {
+	null,
 	int,
 	float,
-	bool,
 	string,
-	null,
+	bool,
+	error
 }
-
 
 export class Type {
-	types: Atoms[];
-	constructor(...types: Atoms[]) {
-		this.types = types;
+	type: BaseTypes;
+	constructor(type: BaseTypes) {
+		this.type = type;
 	}
 
-	prune() {
-
-		for (let i = 0; i < this.types.length; i++) {
-			const t1 = this.types[i];
-
-			for (let j = i; j < this.types.length; j++) {
-				if (i == j) continue;
-
-				const t2 = this.types[j];
-
-				if (t1 == t2) {
-					this.types.splice(j, 1);
-					j--;
-				}
-
-			}
-		}
-
+	toString() {
+		return BaseTypes[this.type]
 	}
 
-	equal(other: Type): boolean {
-		this.prune();
-		other.prune();
-		
-		if (this.types.length != other.types.length) return false;
-
-		for (let i = 0; i < this.types.length; i++) {
-			if (this.types[i] != other.types[i]) return false;
-		}
-
-		return true;
+	static compare(t1: Type, t2: Type) {
+		return t1.type == t2.type
 	}
-
 }
 
-export const TypeDefs = {
-	int: new Type(Atoms.int),
-	float: new Type(Atoms.float),
-	bool: new Type(Atoms.bool),
-	string: new Type(Atoms.string),
-	null: new Type(Atoms.null),
-} as const;
-
+export const type_defaults = {
+	error: new Type(BaseTypes.error),
+	null: new Type(BaseTypes.null),
+	int: new Type(BaseTypes.int),
+	bool: new Type(BaseTypes.bool),
+	string: new Type(BaseTypes.string),
+}

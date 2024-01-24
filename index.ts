@@ -3,12 +3,14 @@ import { vm, OP, ASM } from "./src/vm";
 
 import { lexer } from "./src/lexer";
 import { parse } from "./src/parser";
+import { bind } from "./src/bind";
 import { resolve } from "./src/resolver";
 
 import { Reporter } from "./src/classes/error";
 
 const src = `
-let test: int = 0
+let test: int = "test"
+
 `
 
 const reporter = new Reporter(src);
@@ -20,6 +22,8 @@ console.log(tokens.map(i => i.toString()))
 const ast = parse(tokens, reporter);
 
 console.log(ast);
+
+bind(ast);
 
 resolve(ast, reporter)
 

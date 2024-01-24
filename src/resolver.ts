@@ -1,196 +1,105 @@
 
 import { Reporter } from "./classes/error";
 import { Expr, Expression, Visitor } from "./classes/expression";
-import { Type, TypeDefs, Atoms } from "./classes/type";
 
-type Result = Type;
+import { Symbol, Type, type_defaults } from "./classes/type";
 
-type EnvironmentType = {
-	type: Type,
-	constant: boolean,
-	defined: boolean
-};
 
-class Environment {
-	encloses: Environment | null;
-	vars: Map<string, EnvironmentType>;
-	constructor(encloses: Environment | null) {
-		this.encloses = encloses;
-		this.vars = new Map<string, EnvironmentType>();
-	}
-	has(name: string): boolean {
-		if (this.vars.has(name)) return true;
-		if (this.encloses != null) return this.encloses.has(name);
-		return false;
-	}
-	add(name: string, type: Type, constant: boolean) {
-		this.vars.set(name, { type, constant, defined: false });
-	}
-	define(name: string, type: Type) {
-		const previous = this.vars.get(name)!;
-		previous.type = type;
-		previous.defined = true;
-	}
-	get(name: string): EnvironmentType {
-		if (this.vars.has(name)) return this.vars.get(name)!;
-		if (this.encloses != null) return this.encloses.get(name);
-		throw new Error(`Oops`);
-	}
-}
+class ResolveVisitor implements Visitor<Type> {
 
-class ResolveVisitor implements Visitor<Result> {
 	reporter: Reporter;
-	expected: Type[] = [];
-	environment: Environment;
-
 	constructor(reporter: Reporter) {
-		this.reporter = reporter;
-		this.environment = new Environment(null);
-	}
-
-	push() {
-		this.environment = new Environment(this.environment);
-	}
-	pop() {
-		this.environment = this.environment.encloses!;
-	}
-
-	expected_push(type: Type) {
-		this.expected.push(type);
-	}
-	expected_pop(): Type {
-		return this.expected.pop()!;
-	}
-	expected_get(): Type {
-		return this.expected[this.expected.length - 1];
+		this.reporter = reporter
 	}
 
 	evaluate(node: Expression) {
-		return node.accept(this);
+		return node.accept(this)
 	}
-	
-	visitBlock(node: Expr.Block): Result {
 
-		let type = new Type(Atoms.null);
-
-		this.push()
-		
-		for (var i = 0; i < node.stmts.length; i++) {
-			type = this.evaluate(node.stmts[i]);
-		}
-
-		this.pop()
-
-		return type;
-
-	}
-	visitLiteralInt(node: Expr.Literal_Int): Result {
-		return TypeDefs.int;
-	}
-	visitLiteralDouble(node: Expr.Literal_Double): Result {
-		return TypeDefs.float;
-	}
-	visitLiteralString(node: Expr.Literal_String): Result {
-		return TypeDefs.string;
-	}
-	visitLiteralBool(node: Expr.Literal_Bool): Result {
-		return TypeDefs.bool;
-	}
-	visitLiteralNull(node: Expr.Literal_Null): Result {
-		return TypeDefs.null;
-	}
-	visitVariable(node: Expr.Variable): Result {
-		if (!this.environment.has(node.name.value)) {
-			this.reporter.error(`error!! resolve: variable '${node.name.value}' does not exist`, node.name.position);
-			return TypeDefs.null;
-		}
-
-		const variable = this.environment.get(node.name.value);
-		if (!variable.defined) {
-			this.reporter.error(`error!! resolve: variable '${node.name.value}' used before defined`, node.name.position);
-		}
-
-		return variable.type;
-	}
-	visitAssign(node: Expr.Assign): Result {
-		if (!this.environment.has(node.name.value)) {
-			this.reporter.error(`error!! resolve: variable '${node.name.value}' does not exist`, node.name.position);
-			return TypeDefs.null;
-		}
-
-		const type = this.environment.get(node.name.value);
-		if (type.constant) {
-			this.reporter.error(`error!! resolve: variable '${node.name.value}' is constant, and can't be reassigned`, node.name.position);
-			return TypeDefs.null;
-		}
-
-		const value = this.evaluate(node.value);
-		if (!value.equal(type.type)) {
-			this.reporter.error(`error!! resolve: incorrect type on '${node.name.value}' assignment`, node.name.position);
-			return type.type;
-		}
-
-		return type.type;
-	}
-	visitIf(node: Expr.If): Result {
-		const condition = this.evaluate(node.condition);
-
-		if (!condition.equal(TypeDefs.bool)) {
-			this.reporter.error("error!! resolve: condition must be bool", node.token.position);
-		}
-
-		const thenBranch = this.evaluate(node.thenBranch);
-		const elseBranch = this.evaluate(node.elseBranch);
-
-		const type = new Type(...thenBranch.types, ...elseBranch.types)
-		type.prune();
-
-		return type;
-	}
-	visitWhile(node: Expr.While): Result {
-		const condition = this.evaluate(node.condition);
-
-		if (!condition.equal(TypeDefs.bool)) {
-			this.reporter.error("error!! resolve: condition must be bool", node.token.position);
-		}
-
-		const branch = this.evaluate(node.branch);
-
-		return branch;
-	}
-	visitBinary(node: Expr.Binary): Result {
-		const left = this.evaluate(node.left);
-		const right = this.evaluate(node.right);
-
-		if (!left.equal(right)) {
-			this.reporter.error("error!! resolve: incompatible types in binary operation", node.op.position);
-		}
-
-		return left;
-	}
-	visitUnary(node: Expr.Unary): Result {
-		throw new Error("Method not implemented.");
-	}
-	visitLet(node: Expr.Let): Result {
-		for (let i = 0; i < node.declarations.length; i++) {
-			const dec = node.declarations[i];
-			this.environment.add(dec.name.value, TypeDefs.null, dec.isConst);
-			const value = this.evaluate(dec.value);
-
-			value.prune();
-			if (value.types.length != 1) {
-				this.reporter.error(`error!! resolve: variable '${dec.name.value}' definition type could not be resolved`, dec.name.position);
-				continue;
+	resolve(node: Expression, name: string): Symbol | null {
+		let checker: Expression | null = node
+		while (checker) {
+			let table = null
+			if (checker instanceof Expr.Module) {
+				table = checker.locals				
+			}
+			if (table) {
+				const symbol = table.get(name)
+				if (symbol) return symbol
 			}
 
-			this.environment.define(dec.name.value, value);
+			checker = checker.parent
 		}
-		return TypeDefs.null;
+		return null
 	}
-	visitReturn(node: Expr.Return): Result {
+
+	visitModule(node: Expr.Module): Type {
+		
+		for (let e of node.stmts)
+			this.evaluate(e)
+
+		return type_defaults.null
+		
+	}
+	visitBlock(node: Expr.Block): Type {
 		throw new Error("Method not implemented.");
 	}
-	visitPrint(node: Expr.Print): Result {
+	visitLiteralInt(node: Expr.Literal_Int): Type {
+		return type_defaults.int
+	}
+	visitLiteralDouble(node: Expr.Literal_Double): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitLiteralString(node: Expr.Literal_String): Type {
+		return type_defaults.string
+	}
+	visitLiteralBool(node: Expr.Literal_Bool): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitLiteralNull(node: Expr.Literal_Null): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitVariable(node: Expr.Variable): Type {
+		const symbol = this.resolve(node, node.name.value)
+		if (symbol) {
+			return this.evaluate(symbol.declaration.value)
+		}
+
+		this.reporter.error(`type error: variable ${node.name.value} doesn't exist in this scope`, node.name.position)
+		return type_defaults.error
+	}
+	visitAssign(node: Expr.Assign): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitIf(node: Expr.If): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitWhile(node: Expr.While): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitBinary(node: Expr.Binary): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitUnary(node: Expr.Unary): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitLet(node: Expr.Let): Type {
+		
+		for (const d of node.declarations) {
+			const type = this.evaluate(d.value)
+			if (Type.compare(d.type, type_defaults.null)) continue
+			if (!Type.compare(d.type, type)) {
+				this.reporter.error(`type error: type <${d.type.toString()}> expected, got <${type.toString()}> instead`, d.name.position) // @todo: fill
+			}
+		}
+
+		return type_defaults.null
+
+	}
+	visitReturn(node: Expr.Return): Type {
+		throw new Error("Method not implemented.");
+	}
+	visitPrint(node: Expr.Print): Type {
 		throw new Error("Method not implemented.");
 	}
 	
@@ -200,7 +109,7 @@ class ResolveVisitor implements Visitor<Result> {
 export const resolve = (ast: Expression, reporter: Reporter): void => {
 
 	const r = new ResolveVisitor(reporter)
-	console.log(r.evaluate(ast).types)
+	console.log(r.evaluate(ast))
 	
 
 }

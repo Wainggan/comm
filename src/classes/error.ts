@@ -32,7 +32,7 @@ export class Reporter {
 				if (curLine == line) break;
 				if (this.src[i] == '\n') curLine++;
 			}
-			str += '\n    ' + this.src.substring(startPos, i);
+			str += '\n    ' + this.src.substring(startPos, i - 1);
 		}
 
 		{
