@@ -1,19 +1,47 @@
-# comm
 
-A simple language intended for mark up.
+# myano
+
+myano is a work-in-progress statically typed scripting language. 
 
 
-## code
+## todo
 
-To install dependencies:
+- [x] tokenizing
+- [x] parsing
+- [ ] type checking
+- [ ] features: setup
+	- [ ] variables
+	- [ ] constant variables
+	- [ ] types
+		- [ ] auto numbers
+		- [ ] char type
+		- [ ] arrays
+		- [ ] objects
+		- [ ] functions
+	- [ ] control flow
+		- [ ] if
+		- [ ] loops
+		- [ ] functions
+		- [ ] type checking control flow
+	- [ ] alias types
+- [ ] compiler
+- [ ] test runtime
+- [ ] vm
+	- [ ] bytecode design
+	- [ ] external vm
+- [ ] javascript runtime
 
-```bash
-bun install
-```
 
-To run:
+
+## run
+
+there are no dependancies.
+
+to run:
 
 ```bash
 bun run index.ts
 ```
+
+
 
