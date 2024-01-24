@@ -9,7 +9,7 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 
 	class ParseError extends Error {
 		constructor(message: string, position: number) {
-			super(message)
+			super()
 			reporter.error(message, position);
 		}
 	}
@@ -84,8 +84,13 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			const stmts: Expression[] = [];
 
 			while (!atEnd()) {
-				if (match(TT.semicolon)) { }
-				else stmts.push(this.statement())
+				try {
+					if (match(TT.semicolon)) { }
+					else stmts.push(this.statement())
+				} catch (e) {
+					// doesn't work for some reason
+					panic()
+				}
 			}
 
 			return new Expr.Module(stmts);
@@ -141,17 +146,17 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			let expr = this.equality();
 
 			if (match(TT.equal)) {
-				const equals = previous(); // for error
+				const equals = previous();
 				let value = this.assignment();
 
 				if (expr instanceof Expr.Variable) {
-					return new Expr.Assign(expr.name, value);
+					return new Expr.Assign(expr, value, equals);
 				}
 				// if (expr instanceof Expr.DynamicGet) {
 				// 	return new Expr.DynamicSet(expr.callee, expr.target, value);
 				// }
 
-				throw new ParseError(`something something`, peek().position) // here
+				throw new ParseError(`parse error: unassignable target`, equals.position)
 			}
 
 			return expr;

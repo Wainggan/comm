@@ -12,6 +12,7 @@ export enum BaseTypes {
 	null,
 	int,
 	float,
+	double,
 	string,
 	bool,
 	error
@@ -36,6 +37,7 @@ export const type_defaults = {
 	error: new Type(BaseTypes.error),
 	null: new Type(BaseTypes.null),
 	int: new Type(BaseTypes.int),
+	double: new Type(BaseTypes.double),
 	bool: new Type(BaseTypes.bool),
 	string: new Type(BaseTypes.string),
 }

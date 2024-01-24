@@ -71,7 +71,11 @@ class BindVisitor implements Visitor<boolean> {
 		return true;
 	}
 	visitAssign(node: Expr.Assign): boolean {
-		throw new Error("Method not implemented.");
+		this.parentify(node, [node.assign, node.value])
+
+		this.evaluate(node.value)
+
+		return true;
 	}
 	
 	visitIf(node: Expr.If): boolean {
@@ -82,10 +86,19 @@ class BindVisitor implements Visitor<boolean> {
 	}
 	
 	visitBinary(node: Expr.Binary): boolean {
-		throw new Error("Method not implemented.");
+		this.parentify(node, [node.left, node.right])
+
+		this.evaluate(node.left)
+		this.evaluate(node.right)
+
+		return true;
 	}
 	visitUnary(node: Expr.Unary): boolean {
-		throw new Error("Method not implemented.");
+		this.parentify(node, [node.right])
+
+		this.evaluate(node.right)
+
+		return true
 	}
 	
 	visitLet(node: Expr.Let): boolean {

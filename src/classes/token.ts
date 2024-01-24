@@ -10,11 +10,15 @@ export enum TT {
 
 	t_int,
 	t_float,
+	t_i8,
+	t_i16,
 	t_i32,
+	t_i64,
 	t_f32,
 	t_f64,
 	t_bool,
 	t_string,
+	t_null,
 	t_void,
 
 	identifier,

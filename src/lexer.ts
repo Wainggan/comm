@@ -84,6 +84,12 @@ export const lexer = (src: string, reporter: Reporter) => {
 
 			'int': TT.t_int,
 			'flt': TT.t_float,
+			'i8': TT.t_i8,
+			'i16': TT.t_i16,
+			'i32': TT.t_i32,
+			'i64': TT.t_i64,
+			'f32': TT.t_f32,
+			'f64': TT.t_f64,
 			'bool': TT.t_bool,
 			'str': TT.t_string,
 			'void': TT.t_void,

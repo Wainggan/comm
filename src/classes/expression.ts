@@ -119,11 +119,13 @@ export namespace Expr {
 		}
 	}
 	export class Assign implements Expression {
-		name: Token;
+		assign: Expression;
 		value: Expression;
-		constructor(name: Token, value: Expression) {
-			this.name = name;
+		op: Token;
+		constructor(assign: Expression, value: Expression, op: Token) {
+			this.assign = assign;
 			this.value = value;
+			this.op = op;
 		}
 		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {

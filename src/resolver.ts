@@ -48,16 +48,16 @@ class ResolveVisitor implements Visitor<Type> {
 		return type_defaults.int
 	}
 	visitLiteralDouble(node: Expr.Literal_Double): Type {
-		throw new Error("Method not implemented.");
+		return type_defaults.double
 	}
 	visitLiteralString(node: Expr.Literal_String): Type {
 		return type_defaults.string
 	}
 	visitLiteralBool(node: Expr.Literal_Bool): Type {
-		throw new Error("Method not implemented.");
+		return type_defaults.bool
 	}
 	visitLiteralNull(node: Expr.Literal_Null): Type {
-		throw new Error("Method not implemented.");
+		return type_defaults.null
 	}
 	visitVariable(node: Expr.Variable): Type {
 		const symbol = this.resolve(node, node.name.value)
@@ -69,7 +69,11 @@ class ResolveVisitor implements Visitor<Type> {
 		return type_defaults.error
 	}
 	visitAssign(node: Expr.Assign): Type {
-		throw new Error("Method not implemented.");
+		const left = this.evaluate(node.assign)
+		const right = this.evaluate(node.value)
+		if (!Type.compare(left, right)) {
+			this.reporter.error(`type error: attempted to assign value of type <${right.toString()}> to variable of type <${left.toString()}>`, node.op.position)
+		}
 	}
 	visitIf(node: Expr.If): Type {
 		throw new Error("Method not implemented.");
@@ -78,10 +82,20 @@ class ResolveVisitor implements Visitor<Type> {
 		throw new Error("Method not implemented.");
 	}
 	visitBinary(node: Expr.Binary): Type {
-		throw new Error("Method not implemented.");
+		const left = this.evaluate(node.left)
+		const right = this.evaluate(node.right)
+
+		// @todo: op level type checking (- incompatible with <string>)
+		if (!Type.compare(left, right)) {
+			this.reporter.error(`type error: type <${left.toString()}> incompatible with <${right.toString()}> with '${node.op.value}' operation`, node.op.position)
+			return type_defaults.error
+		}
+
+		return left
 	}
 	visitUnary(node: Expr.Unary): Type {
-		throw new Error("Method not implemented.");
+		const right = this.evaluate(node.right)
+		return right
 	}
 	visitLet(node: Expr.Let): Type {
 		

@@ -9,8 +9,10 @@ import { resolve } from "./src/resolver";
 import { Reporter } from "./src/classes/error";
 
 const src = `
-let test: int = "test"
-
+let test: int = 1
+test = 4
+"test" + "test" // should error
+4 + 4
 `
 
 const reporter = new Reporter(src);
