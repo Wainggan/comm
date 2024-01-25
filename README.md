@@ -19,7 +19,7 @@ myano is a work-in-progress statically typed scripting language.
 		- [ ] objects
 		- [ ] functions
 	- [ ] control flow
-		- [ ] if
+		- [x] if
 		- [ ] loops
 		- [ ] functions
 		- [ ] type checking control flow
