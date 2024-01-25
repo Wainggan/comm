@@ -71,7 +71,10 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 		},
 		atom() {
 			if (match(TT.t_int, TT.t_i32)) {
-				return type_defaults.int;
+				return type_defaults.i32;
+			}
+			if (match(TT.t_i16)) {
+				return type_defaults.i16;
 			}
 			throw new Error(`unknown type`)
 		}
@@ -255,7 +258,7 @@ export const parse = (tokens: Token[], reporter: Reporter): Expression => {
 			if (match(TT.int))
 				return new Expr.Literal_Int(Number.parseInt(previous().value));
 			if (match(TT.float))
-				return new Expr.Literal_Double(Number.parseFloat(previous().value));
+				return new Expr.Literal_Float(Number.parseFloat(previous().value));
 			if (match(TT.string))
 				return new Expr.Literal_String(previous().value);
 

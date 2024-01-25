@@ -11,7 +11,7 @@ export interface Visitor<V> {
 	visitBlock(node: Expr.Block): V;
 
 	visitLiteralInt(node: Expr.Literal_Int): V;
-	visitLiteralDouble(node: Expr.Literal_Double): V;
+	visitLiteralFloat(node: Expr.Literal_Float): V;
 	visitLiteralString(node: Expr.Literal_String): V;
 	visitLiteralBool(node: Expr.Literal_Bool): V;
 	visitLiteralNull(node: Expr.Literal_Null): V;
@@ -52,6 +52,7 @@ export namespace Expr {
 
 	export class Block implements Expression {
 		stmts: Expression[];
+		locals: Table = new Map();
 		constructor(stmts: Expression[]) {
 			this.stmts = stmts;
 		}
@@ -71,14 +72,14 @@ export namespace Expr {
 			return visitor.visitLiteralInt(this);
 		}
 	}
-	export class Literal_Double implements Expression {
+	export class Literal_Float implements Expression {
 		value: number;
 		constructor(value: number) {
 			this.value = value;
 		}
 		parent: Expression | null = null;
 		accept<V>(visitor: Visitor<V>): V {
-			return visitor.visitLiteralDouble(this);
+			return visitor.visitLiteralFloat(this);
 		}
 	}
 	export class Literal_String implements Expression {

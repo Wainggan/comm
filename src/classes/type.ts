@@ -8,24 +8,14 @@ export type Symbol = {
 
 export type Table = Map<string, Symbol>
 
-export enum BaseTypes {
-	null,
-	int,
-	float,
-	double,
-	string,
-	bool,
-	error
-}
-
 export class Type {
-	type: BaseTypes;
-	constructor(type: BaseTypes) {
+	type: string;
+	constructor(type: string) {
 		this.type = type;
 	}
 
 	toString() {
-		return BaseTypes[this.type]
+		return this.type
 	}
 
 	static compare(t1: Type, t2: Type) {
@@ -34,10 +24,11 @@ export class Type {
 }
 
 export const type_defaults = {
-	error: new Type(BaseTypes.error),
-	null: new Type(BaseTypes.null),
-	int: new Type(BaseTypes.int),
-	double: new Type(BaseTypes.double),
-	bool: new Type(BaseTypes.bool),
-	string: new Type(BaseTypes.string),
+	error: new Type('error'),
+	null: new Type('null'),
+	i16: new Type('i16'),
+	i32: new Type('i32'),
+	double: new Type('double'),
+	bool: new Type('bool'),
+	string: new Type('string'),
 }
